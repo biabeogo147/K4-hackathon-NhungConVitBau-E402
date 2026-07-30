@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Đăng nhập Trợ lý AI Thực chiến dành cho học viên."
+    />
+    <title>Đăng nhập · Trợ lý AI Thực chiến</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-decoration auth-decoration--one" aria-hidden="true"></div>
+    <div class="auth-decoration auth-decoration--two" aria-hidden="true"></div>
+
+    <main class="auth-layout">
+      <section class="auth-intro" aria-labelledby="app-heading">
+        <a class="brand" href="auth.html" aria-label="Trang đăng nhập Trợ lý AI Thực chiến">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="img">
+              <path d="M16 3.5 19 13l9.5 3-9.5 3-3 9.5-3-9.5-9.5-3 9.5-3 3-9.5Z" />
+            </svg>
+          </span>
+          <span>Trợ lý AI Thực chiến</span>
+        </a>
+
+        <div class="auth-intro__copy">
+          <p class="eyebrow">ĐỒNG HÀNH CÙNG HỌC VIÊN</p>
+          <h1 id="app-heading">Học đúng trọng tâm.<br />Tiến bộ mỗi ngày.</h1>
+          <p>
+            Không gian hỏi đáp tối giản giúp bạn tập trung vào những điều quan trọng
+            trong hành trình học AI thực chiến.
+          </p>
+        </div>
+
+        <div class="auth-intro__note">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Prototype hoạt động hoàn toàn offline</span>
+        </div>
+      </section>
+
+      <section class="auth-card" aria-label="Xác thực tài khoản">
+        <div class="auth-card__header">
+          <p class="eyebrow">BẮT ĐẦU</p>
+          <h2>Chào mừng bạn</h2>
+          <p>Đăng nhập hoặc tạo tài khoản để tiếp tục.</p>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Chọn hình thức xác thực">
+          <button
+            class="auth-tab is-active"
+            type="button"
+            role="tab"
+            id="login-tab"
+            data-auth-tab="login"
+            aria-controls="login-panel"
+            aria-selected="true"
+          >
+            Đăng nhập
+          </button>
+          <button
+            class="auth-tab"
+            type="button"
+            role="tab"
+            id="register-tab"
+            data-auth-tab="register"
+            aria-controls="register-panel"
+            aria-selected="false"
+          >
+            Đăng ký
+          </button>
+        </div>
+
+        <div id="auth-alert" class="form-alert" aria-live="polite"></div>
+
+        <div
+          id="login-panel"
+          class="auth-panel"
+          role="tabpanel"
+          data-auth-panel="login"
+          aria-labelledby="login-tab"
+        >
+          <form id="login-form" novalidate>
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="ban@example.com"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="login-password">Mật khẩu</label>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Tối thiểu 6 ký tự"
+                required
+              />
+            </div>
+            <button
+              class="button button--primary button--full"
+              type="submit"
+              data-default-label="Đăng nhập"
+            >
+              Đăng nhập
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
+          <p class="auth-switch">
+            Chưa có tài khoản?
+            <button type="button" data-switch-auth="register">Đăng ký ngay</button>
+          </p>
+        </div>
+
+        <div
+          id="register-panel"
+          class="auth-panel"
+          role="tabpanel"
+          data-auth-panel="register"
+          aria-labelledby="register-tab"
+          hidden
+        >
+          <form id="register-form" novalidate>
+            <div class="field">
+              <label for="register-name">Họ và tên</label>
+              <input
+                id="register-name"
+                name="fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="Nguyễn Minh An"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="register-email">Email</label>
+              <input
+                id="register-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="ban@example.com"
+                required
+              />
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="register-password">Mật khẩu</label>
+                <input
+                  id="register-password"
+                  name="password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Ít nhất 6 ký tự"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="register-confirm-password">Xác nhận</label>
+                <input
+                  id="register-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Nhập lại mật khẩu"
+                  required
+                />
+              </div>
+            </div>
+            <button
+              class="button button--primary button--full"
+              type="submit"
+              data-default-label="Tạo tài khoản"
+            >
+              Tạo tài khoản
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
+          <p class="auth-switch">
+            Đã có tài khoản?
+            <button type="button" data-switch-auth="login">Đăng nhập</button>
+          </p>
+        </div>
+
+        <aside class="demo-account" aria-label="Tài khoản dùng thử">
+          <span class="demo-account__icon" aria-hidden="true">i</span>
+          <div>
+            <strong>Tài khoản dùng thử</strong>
+            <p><span>hocvien@example.com</span><span>123456</span></p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="mock_data/mock-data.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/auth.js"></script>
+  </body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Trò chuyện cùng Trợ lý AI Thực chiến." />
+    <title>Trò chuyện · Trợ lý AI Thực chiến</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="chat-page">
+    <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+    <aside id="sidebar" class="chat-sidebar" aria-label="Các cuộc trò chuyện">
+      <div class="sidebar-header">
+        <a class="brand brand--compact" href="chat.html" aria-label="Trợ lý AI Thực chiến">
+          <span class="brand__mark brand__mark--small" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="img">
+              <path d="M16 3.5 19 13l9.5 3-9.5 3-3 9.5-3-9.5-9.5-3 9.5-3 3-9.5Z" />
+            </svg>
+          </span>
+          <span>Trợ lý AI</span>
+        </a>
+        <button id="sidebar-close" class="icon-button sidebar-close" type="button" aria-label="Đóng danh sách hội thoại">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <button id="new-chat-button" class="new-chat-button" type="button">
+        <span aria-hidden="true">＋</span>
+        <span>Cuộc trò chuyện mới</span>
+      </button>
+
+      <nav class="conversation-nav" aria-label="Lịch sử hội thoại">
+        <p class="sidebar-label">Gần đây</p>
+        <ul id="conversation-list" class="conversation-list"></ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logout-button" class="logout-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10M14 8l4 4-4 4M9 12h9" />
+          </svg>
+          <span>Đăng xuất</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="chat-main">
+      <header class="mobile-topbar">
+        <button
+          id="menu-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Mở danh sách hội thoại"
+          aria-controls="sidebar"
+          aria-expanded="false"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <span>Trợ lý AI Thực chiến</span>
+        <span class="mobile-topbar__spacer" aria-hidden="true"></span>
+      </header>
+
+      <div id="message-scroll" class="message-scroll">
+        <section
+          id="message-list"
+          class="message-list"
+          aria-label="Nội dung trò chuyện"
+          aria-live="polite"
+        ></section>
+
+        <div id="typing-indicator" class="message message--assistant typing-indicator" hidden>
+          <div class="message__avatar" aria-hidden="true">AI</div>
+          <div class="message__bubble" aria-label="Trợ lý đang trả lời">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-shell">
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="chat-input">Nhập câu hỏi</label>
+          <textarea
+            id="chat-input"
+            name="message"
+            rows="1"
+            maxlength="2000"
+            placeholder="Nhập câu hỏi của bạn..."
+            autocomplete="off"
+          ></textarea>
+          <button id="send-button" class="send-button" type="submit" aria-label="Gửi tin nhắn">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m5 12 14-7-4.5 14-3-5.5L5 12Zm6.5 1.5L19 5" />
+            </svg>
+          </button>
+        </form>
+        <p class="composer-hint">Enter để gửi · Shift + Enter để xuống dòng</p>
+      </div>
+    </main>
+
+    <script src="mock_data/mock-data.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/chat.js"></script>
+  </body>
+</html>
