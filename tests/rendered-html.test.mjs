@@ -30,8 +30,9 @@ test("renders the auth gate and keeps the assistant experience available", async
 
   const html = await response.text();
   assert.match(html, /<title>AI Thực Chiến — Trợ lý tìm hiểu chương trình<\/title>/i);
-  assert.match(html, /class="auth-shell auth-loading"/);
-  assert.match(html, /aria-label="Đang tải"/);
+  assert.match(html, /class="auth-shell"/);
+  assert.match(html, /Đăng nhập để tiếp tục/);
+  assert.match(html, /giao diện minh họa/);
   assert.doesNotMatch(html, /Lượt trả lời tiếp theo|Hai model, một luồng nhất quán/);
   assert.doesNotMatch(html, /Gemini 3\.[15] Flash Lite/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
