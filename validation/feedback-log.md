@@ -8,6 +8,18 @@ Task giao cho người thử:
 > Hãy dùng trợ lý để tìm hiểu chương trình và quyết định một bước chuẩn bị phù
 > hợp với nền tảng hiện tại của bạn. Không cung cấp dữ liệu nhạy cảm.
 
+## Protocol cho mỗi phiên 10 phút
+
+1. Xin phép người thử trước khi ghi quote và chỉ ghi dữ liệu cần cho validation.
+2. Đọc nguyên văn task ở trên, sau đó quan sát im lặng; không hướng dẫn cách bấm.
+3. Ghi thời điểm người thử dừng, quay lại nguồn, sửa câu hỏi hoặc cần trợ giúp.
+4. Hỏi đúng ba câu sau task và ghi nguyên văn câu trả lời.
+5. Phân loại mức nghiêm trọng:
+   - `Critical`: không hoàn thành được task hoặc tin nhầm thông tin quan trọng.
+   - `High`: hoàn thành nhưng cần người điều phối giải thích.
+   - `Medium`: gây chậm hoặc thiếu tin tưởng nhưng vẫn tự xử lý được.
+   - `Low`: vấn đề câu chữ hoặc trình bày không chặn task.
+
 | Người thử (tên/vai) | Willing user? | Task | Quan sát hành vi | Quote nguyên văn | Mức nghiêm trọng |
 |---|---|---|---|---|---|
 | `[CẦN ĐIỀN]` |  |  |  |  |  |
