@@ -49,7 +49,6 @@ type ReadinessAnswers = {
 };
 
 const STORAGE_KEY = "ai-thuc-chien-chat-v5";
-const AUTH_STORAGE_KEY = "ai-thuc-chien-demo-auth-v2";
 const CONTACT_EMAIL = "AIThucchien@vinuni.edu.vn";
 const SUGGESTIONS = [
   "Chương trình phù hợp với ai?",
@@ -139,7 +138,7 @@ function scoreReadiness(answers: ReadinessAnswers) {
 }
 
 export function ChatApp() {
-  const [hasEntered, setHasEntered] = useState<boolean | null>(null);
+  const [hasEntered, setHasEntered] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -149,10 +148,6 @@ export function ChatApp() {
   const endRef = useRef<HTMLDivElement>(null);
   const hydrated = useRef(false);
   const requestController = useRef<AbortController | undefined>(undefined);
-
-  useEffect(() => {
-    setHasEntered(localStorage.getItem(AUTH_STORAGE_KEY) === "entered");
-  }, []);
 
   useEffect(() => {
     try {
@@ -272,23 +267,8 @@ export function ChatApp() {
 
   const readinessComplete = Object.values(readiness).every(Boolean);
 
-  if (hasEntered === null) {
-    return (
-      <main className="auth-shell auth-loading" aria-label="Đang tải">
-        <span className="auth-loading-mark">AI</span>
-      </main>
-    );
-  }
-
   if (!hasEntered) {
-    return (
-      <AuthWelcome
-        onContinue={() => {
-          localStorage.setItem(AUTH_STORAGE_KEY, "entered");
-          setHasEntered(true);
-        }}
-      />
-    );
+    return <AuthWelcome onContinue={() => setHasEntered(true)} />;
   }
 
   return (
