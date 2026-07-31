@@ -563,6 +563,14 @@ textarea::placeholder {
   color: #8b9893;
 }
 
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(10, 107, 76, 0.35);
+  outline-offset: 2px;
+}
+
 .send-button {
   display: grid;
   width: 42px;

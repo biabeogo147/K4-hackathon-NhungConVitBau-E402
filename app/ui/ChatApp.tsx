@@ -484,7 +484,7 @@ export function ChatApp() {
                 type="button">Xem kết quả</button>
             </div>
             {readinessResult && (
-              <div className="readiness-result">
+              <div className="readiness-result" role="status" aria-live="polite">
                 <span>{readinessResult.score}/100</span>
                 <strong>{readinessResult.label}</strong>
                 <p>{readinessResult.plan}</p>
