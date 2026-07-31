@@ -23,21 +23,31 @@ async function render() {
   );
 }
 
-test("renders the AI Thực Chiến assistant", async () => {
+test("renders the auth gate and keeps the assistant experience available", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
   assert.match(html, /<title>AI Thực Chiến — Trợ lý tìm hiểu chương trình<\/title>/i);
-  assert.match(html, /Hỏi sâu\. Hiểu đúng\. Sẵn sàng cho bước tiếp theo\./);
-  assert.match(html, /Kho tri thức đang dùng/);
-  assert.match(html, /Kiểm tra mức độ sẵn sàng/);
-  assert.match(html, /Tài liệu chương trình \+ nguồn công khai/);
-  assert.match(html, /Onboarding &amp; hỗ trợ nền tảng/);
+  assert.match(html, /class="auth-shell auth-loading"/);
+  assert.match(html, /aria-label="Đang tải"/);
   assert.doesNotMatch(html, /Lượt trả lời tiếp theo|Hai model, một luồng nhất quán/);
   assert.doesNotMatch(html, /Gemini 3\.[15] Flash Lite/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+
+  const [authSource, chatSource] = await Promise.all([
+    readFile(new URL("../app/ui/AuthWelcome.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/ui/ChatApp.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(authSource, /Đăng nhập để tiếp tục/);
+  assert.match(authSource, /Tạo tài khoản mới/);
+  assert.match(authSource, /giao diện minh họa/);
+  assert.match(chatSource, /Hỏi sâu\. Hiểu đúng\. Sẵn sàng cho bước tiếp theo\./);
+  assert.match(chatSource, /Kho tri thức đang dùng/);
+  assert.match(chatSource, /Kiểm tra mức độ sẵn sàng/);
+  assert.match(chatSource, /Tài liệu chương trình \+ nguồn công khai/);
+  assert.match(chatSource, /Onboarding & hỗ trợ nền tảng/);
 });
 
 test("does not expose the private Google document as a citation URL", async () => {
