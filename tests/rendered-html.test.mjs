@@ -47,8 +47,45 @@ test("renders the auth gate and keeps the assistant experience available", async
   assert.match(chatSource, /Hỏi sâu\. Hiểu đúng\. Sẵn sàng cho bước tiếp theo\./);
   assert.match(chatSource, /Kho tri thức đang dùng/);
   assert.match(chatSource, /Kiểm tra mức độ sẵn sàng/);
+  assert.match(chatSource, /Luyện tập cá nhân hóa/);
   assert.match(chatSource, /Tài liệu chương trình \+ nguồn công khai/);
   assert.match(chatSource, /Onboarding & hỗ trợ nền tảng/);
+});
+
+test("adaptive practice is complete and its bank is structurally valid", async () => {
+  const [practiceSource, bankText] = await Promise.all([
+    readFile(new URL("../app/ui/PracticeLab.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/data/practice-question-bank.json", import.meta.url),
+      "utf8",
+    ),
+  ]);
+  const bank = JSON.parse(bankText);
+
+  assert.match(practiceSource, /Làm bài chẩn đoán/);
+  assert.match(practiceSource, /Nhờ AI lập lộ trình 2 tuần/);
+  assert.match(practiceSource, /Anki/);
+  assert.match(practiceSource, /không phải dự đoán[\s\S]*kết quả chính thức/i);
+  assert.equal(bank.quality.accepted, 142);
+  assert.equal(bank.questions.length, 142);
+  assert.match(bank.disclaimer, /không phải đề thi/i);
+
+  const prompts = new Set();
+  const modules = new Set();
+  for (const question of bank.questions) {
+    assert.ok(question.prompt.trim());
+    assert.ok(question.explanation.trim());
+    assert.ok(question.options.length >= 2);
+    assert.ok(
+      question.options.some((option) => option.key === question.answer),
+      `${question.id} has an invalid answer`,
+    );
+    const promptKey = question.prompt.trim().toLocaleLowerCase("vi");
+    assert.equal(prompts.has(promptKey), false, `${question.id} is duplicated`);
+    prompts.add(promptKey);
+    modules.add(question.module);
+  }
+  assert.deepEqual([...modules].sort(), ["A", "B", "C", "D"]);
 });
 
 test("exposes only the approved Drive files for program citations", async () => {
