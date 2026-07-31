@@ -15,7 +15,9 @@ type Source = {
   title: string;
   audience: string;
   freshness: string;
-  kind?: "program-document" | "official-web";
+  kind?: "program-document" | "official-web" | "community-web";
+  trustLevel?: "grounded" | "advisory";
+  disclaimer?: string;
   url?: string;
 };
 
@@ -28,18 +30,38 @@ type Message = {
   needsHumanHelp?: boolean;
   timeSensitive?: boolean;
   needsClarification?: boolean;
+  hasAdvisorySources?: boolean;
   decision?: {
     intent: string;
+    contextTurnsUsed?: number;
+    toolMode?: "forced" | "automatic";
     toolStatus:
       | "official-web"
+      | "public-web"
       | "official-web-unavailable"
       | "program-knowledge"
       | "no-source";
     confidence: "supported" | "limited";
   };
   isError?: boolean;
+  isStreaming?: boolean;
   retryText?: string;
 };
+
+type ChatStreamEvent =
+  | {
+      type: "meta";
+      sources?: Source[];
+      suggestions?: string[];
+      needsHumanHelp?: boolean;
+      timeSensitive?: boolean;
+      needsClarification?: boolean;
+      hasAdvisorySources?: boolean;
+      decision?: Message["decision"];
+    }
+  | { type: "delta"; text: string }
+  | { type: "done" }
+  | { type: "error"; message: string };
 
 type ReadinessAnswers = {
   availability: string;
@@ -142,6 +164,7 @@ export function ChatApp() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [readiness, setReadiness] = useState(EMPTY_READINESS);
   const [readinessResult, setReadinessResult] =
     useState<ReturnType<typeof scoreReadiness>>();
@@ -181,10 +204,12 @@ export function ChatApp() {
     setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
+    setIsWaitingForResponse(true);
     const controller = new AbortController();
     requestController.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 50_000);
 
+    let streamingMessageId: string | undefined;
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -194,38 +219,92 @@ export function ChatApp() {
         }),
         signal: controller.signal,
       });
-      const payload = (await response.json()) as {
-        answer?: string;
-        sources?: Source[];
-        suggestions?: string[];
-        needsHumanHelp?: boolean;
-        timeSensitive?: boolean;
-        needsClarification?: boolean;
-        decision?: Message["decision"];
-        error?: string;
-      };
 
-      if (!response.ok || !payload.answer) {
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(payload.error || "Không thể nhận câu trả lời lúc này.");
       }
+      if (!response.body) throw new Error("Trình duyệt không nhận được luồng trả lời.");
 
+      streamingMessageId = crypto.randomUUID();
+      const responseMessageId = streamingMessageId;
       setMessages((current) => [
         ...current,
         {
-          id: crypto.randomUUID(),
+          id: responseMessageId,
           role: "assistant",
-          content: payload.answer as string,
-          sources: payload.sources,
-          suggestions: payload.suggestions,
-          needsHumanHelp: payload.needsHumanHelp,
-          timeSensitive: payload.timeSensitive,
-          needsClarification: payload.needsClarification,
-          decision: payload.decision,
+          content: "",
+          isStreaming: true,
         },
       ]);
+      setIsWaitingForResponse(false);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let receivedText = false;
+
+      const applyEvent = (event: ChatStreamEvent) => {
+        if (event.type === "error") throw new Error(event.message);
+        if (event.type === "delta" && event.text) {
+          receivedText = true;
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === responseMessageId
+                ? { ...message, content: message.content + event.text }
+                : message,
+            ),
+          );
+        }
+        if (event.type === "meta") {
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === responseMessageId
+                ? {
+                    ...message,
+                    sources: event.sources,
+                    suggestions: event.suggestions,
+                    needsHumanHelp: event.needsHumanHelp,
+                    timeSensitive: event.timeSensitive,
+                    needsClarification: event.needsClarification,
+                    hasAdvisorySources: event.hasAdvisorySources,
+                    decision: event.decision,
+                  }
+                : message,
+            ),
+          );
+        }
+        if (event.type === "done") {
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === responseMessageId
+                ? { ...message, isStreaming: false }
+                : message,
+            ),
+          );
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (line.trim()) applyEvent(JSON.parse(line) as ChatStreamEvent);
+        }
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        applyEvent(JSON.parse(buffer) as ChatStreamEvent);
+      }
+      if (!receivedText) throw new Error("Dịch vụ không trả về nội dung.");
     } catch (error) {
       setMessages((current) => [
-        ...current,
+        ...current.filter((message) => message.id !== streamingMessageId),
         {
           id: crypto.randomUUID(),
           role: "assistant",
@@ -242,6 +321,7 @@ export function ChatApp() {
     } finally {
       window.clearTimeout(timeout);
       requestController.current = undefined;
+      setIsWaitingForResponse(false);
       setIsLoading(false);
     }
   }
@@ -334,7 +414,11 @@ export function ChatApp() {
                     {message.role === "assistant" ? "AI" : "Bạn"}
                   </div>
                   <div className="message-content">
-                    <div className={`bubble ${message.isError ? "error-text" : ""}`}>
+                    <div
+                      className={`bubble ${
+                        message.isError ? "error-text" : ""
+                      } ${message.isStreaming ? "streaming" : ""}`}
+                    >
                       <FormattedMessage content={message.content} />
                     </div>
                     {message.role === "assistant" && !message.isError && (
@@ -345,14 +429,32 @@ export function ChatApp() {
                             nguồn bên dưới để xác minh ngày cập nhật.
                           </p>
                         )}
+                        {message.hasAdvisorySources && (
+                          <p className="source-disclaimer">
+                            Nguồn mạng xã hội hoặc nguồn công khai không chính
+                            thức có thể không chính xác và chỉ nên tham khảo.
+                            Hãy ưu tiên tài liệu chương trình và nguồn chính
+                            thức khi ra quyết định.
+                          </p>
+                        )}
                         {message.decision && (
                           <div className="decision-trace">
                             <span>
+                              Ngữ cảnh: {message.decision.contextTurnsUsed || 1}
+                              {" "}lượt gần nhất
+                            </span>
+                            <span>
                               {message.decision.toolStatus === "official-web"
-                                ? "Đã kiểm tra nguồn công khai"
+                                ? message.decision.toolMode === "forced"
+                                  ? "Đã bắt buộc gọi công cụ web"
+                                  : "Đã kiểm tra nguồn công khai"
+                                : message.decision.toolStatus === "public-web"
+                                  ? "Đã tìm nguồn công khai để tham khảo"
                                 : message.decision.toolStatus ===
                                     "official-web-unavailable"
-                                  ? "Chưa xác minh được nguồn công khai"
+                                  ? message.decision.toolMode === "forced"
+                                    ? "Đã gọi tool nhưng chưa có nguồn phù hợp"
+                                    : "Chưa xác minh được nguồn công khai"
                                   : message.decision.toolStatus ===
                                       "program-knowledge"
                                     ? "Đã tra cứu kho chương trình"
@@ -378,13 +480,21 @@ export function ChatApp() {
                                 href={source.url} key={`${source.id}-${index}`}
                                 rel="noreferrer" target="_blank"
                                 title={`Website công khai · ${source.freshness}`}>
-                                Nguồn {index + 1}: {source.title} ↗
+                                Chính thức {index + 1}: {source.title} ↗
+                              </a>
+                            ) : source.kind === "community-web" && source.url ? (
+                              <a className="source-badge advisory"
+                                href={source.url} key={`${source.id}-${index}`}
+                                rel="noreferrer" target="_blank"
+                                title={source.disclaimer ||
+                                  "Nguồn công khai chỉ nên tham khảo"}>
+                                Tham khảo {index + 1}: {source.title} ↗
                               </a>
                             ) : (
                               <span className="source-badge internal"
                                 key={`${source.id}-${index}`}
-                                title={`Tài liệu tham chiếu · ${source.freshness}`}>
-                                Nguồn {index + 1}: {source.title}
+                                title={`Tài liệu chương trình có căn cứ · ${source.freshness}`}>
+                                Tài liệu {index + 1}: {source.title}
                               </span>
                             ),
                           )}
@@ -419,7 +529,7 @@ export function ChatApp() {
               ))
             )}
 
-            {isLoading && (
+            {isLoading && isWaitingForResponse && (
               <div className="message assistant">
                 <div className="avatar" aria-hidden="true">AI</div>
                 <div className="bubble typing" aria-label="Đang tìm và soạn câu trả lời">

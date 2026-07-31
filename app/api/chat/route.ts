@@ -1,6 +1,6 @@
 import { retrieveKnowledge } from "../../lib/knowledge";
 import {
-  getOfficialWebSources,
+  getPublicWebSources,
   shouldSearchOfficialWeb,
 } from "../../lib/official-tools";
 import { getConversationGuidance } from "../../lib/product-intelligence";
@@ -9,6 +9,9 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
+
+const TOOL_CONTEXT_WINDOW_SIZE = 6;
+const TOOL_CONTEXT_MESSAGE_LIMIT = 260;
 
 const MODELS = [
   {
@@ -46,6 +49,26 @@ function extractGeminiText(payload: unknown) {
   );
 }
 
+function buildToolContext(messages: ChatMessage[]) {
+  const contextMessages = messages.slice(-TOOL_CONTEXT_WINDOW_SIZE);
+  const query = contextMessages
+    .map((message, index) => {
+      const content = message.content
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, TOOL_CONTEXT_MESSAGE_LIMIT);
+      const isCurrent = index === contextMessages.length - 1;
+      const role = message.role === "user" ? "Người dùng" : "Trợ lý";
+      return `${role}${isCurrent ? " (câu hỏi hiện tại)" : ""}: ${content}`;
+    })
+    .join("\n");
+
+  return {
+    query,
+    turnsUsed: contextMessages.length,
+  };
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
@@ -76,28 +99,38 @@ export async function POST(request: Request) {
     return Response.json({ error: "Bạn chưa nhập câu hỏi." }, { status: 400 });
   }
 
+  const toolContext = buildToolContext(messages);
   // Deterministic per-conversation round robin. The client cannot request an
   // arbitrary model; this route can call only the two IDs declared above.
   const model = MODELS[(userMessages.length - 1) % MODELS.length];
   const initialGuidance = getConversationGuidance(latestQuestion, true);
-  const retrieved = retrieveKnowledge(latestQuestion);
-  // A short greeting does not need a public-web lookup.
+  const retrieved = retrieveKnowledge(toolContext.query);
+  const forceWebTools =
+    process.env.FORCE_WEB_TOOLS?.trim().toLowerCase() === "true";
+  // FORCE_WEB_TOOLS is useful for demos and audited flows where every answer
+  // must attempt a live official-source lookup before Gemini is called.
   const webSearchRequested =
-    initialGuidance.intent !== "greeting" &&
-    shouldSearchOfficialWeb(latestQuestion);
-  const officialWebSources = webSearchRequested
-    ? await getOfficialWebSources(latestQuestion)
+    forceWebTools ||
+    (initialGuidance.intent !== "greeting" &&
+      shouldSearchOfficialWeb(toolContext.query));
+  const publicWebSources = webSearchRequested
+    ? await getPublicWebSources(toolContext.query)
     : [];
+  const groundedWebSources = publicWebSources.filter(
+    (source) => source.trustLevel === "grounded",
+  );
+  const advisoryWebSources = publicWebSources.filter(
+    (source) => source.trustLevel === "advisory",
+  );
   const rawContextSources = [
     ...retrieved.map((source) => ({
       ...source,
       kind: "program-document" as const,
       url: undefined,
+      trustLevel: "grounded" as const,
+      disclaimer: undefined,
     })),
-    ...officialWebSources.map((source) => ({
-      ...source,
-      kind: "official-web" as const,
-    })),
+    ...publicWebSources,
   ];
   const contextSources = Array.from(
     rawContextSources.reduce((grouped, source) => {
@@ -121,10 +154,12 @@ export async function POST(request: Request) {
             `[Nguồn ${index + 1}: ${source.title} | Loại: ${
               source.kind === "official-web"
                 ? "Website công khai của VinUni/Vingroup"
-                : "Tài liệu tham chiếu của chương trình"
+                : source.kind === "community-web"
+                  ? "Nguồn công khai hoặc mạng xã hội — chỉ tham khảo, có thể không chính xác"
+                  : "Tài liệu chương trình đã cung cấp"
             } | Đối tượng: ${source.audience} | Độ mới: ${source.freshness}${
               source.url ? ` | URL: ${source.url}` : ""
-            }]\n${source.excerpt}`,
+            }${source.disclaimer ? ` | Cảnh báo: ${source.disclaimer}` : ""}]\n${source.excerpt}`,
         )
         .join("\n\n")
     : "Không tìm thấy đoạn tài liệu phù hợp.";
@@ -153,6 +188,9 @@ NGUYÊN TẮC BẮT BUỘC:
 - Nếu intent là "greeting", trả lời tối đa 2 câu và gợi ý ngắn phạm vi trợ lý.
 - Khi đưa lộ trình chuẩn bị, phân biệt rõ phần dựa trên tài liệu và phần gợi ý định hướng; không trình bày điểm sẵn sàng như kết quả tuyển chọn chính thức.
 - Ưu tiên nguồn website chính thức mới hơn cho lịch, hạn, địa điểm và tuyển sinh. Không trình bày thông báo cũ như thông tin hiện hành.
+- Tài liệu chương trình được cung cấp và website VinUni/Vingroup là nguồn có căn cứ để trả lời.
+- Nguồn báo chí, diễn đàn hoặc mạng xã hội chỉ dùng để bổ sung góc nhìn. Luôn nói rõ chúng có thể không chính xác và chỉ nên tham khảo.
+- Không dùng nguồn công khai không chính thức làm căn cứ duy nhất để khẳng định học phí, lịch, hạn, điều kiện tuyển sinh hoặc quyền lợi.
 - Nếu không đủ dữ liệu, nói thẳng chưa tìm thấy thông tin chính thức; không dùng kiến thức bên ngoài.
 - Không yêu cầu người dùng gửi CCCD, OTP, mật khẩu hoặc dữ liệu nhạy cảm.
 - Trả lời bằng tiếng Việt, thân thiện, trực tiếp, tối đa khoảng 220 từ.
@@ -167,9 +205,60 @@ ${context}`;
     parts: [{ text: message.content }],
   }));
 
+  const uniqueSources = contextSources.map(
+    ({
+      id,
+      title,
+      audience,
+      freshness,
+      kind,
+      url,
+      trustLevel,
+      disclaimer,
+    }) => ({
+      id,
+      title,
+      audience,
+      freshness,
+      kind,
+      trustLevel,
+      ...(disclaimer ? { disclaimer } : {}),
+      ...(kind !== "program-document" && url ? { url } : {}),
+    }),
+  );
+  const responseMetadata = {
+    sources: uniqueSources.slice(0, 7),
+    suggestions: guidance.suggestions,
+    needsHumanHelp:
+      guidance.needsHumanHelp ||
+      (guidance.timeSensitive && groundedWebSources.length === 0),
+    timeSensitive: guidance.timeSensitive,
+    needsClarification: guidance.needsClarification,
+    hasAdvisorySources: advisoryWebSources.length > 0,
+    decision: {
+      intent: guidance.intent,
+      contextTurnsUsed: toolContext.turnsUsed,
+      toolMode: forceWebTools ? ("forced" as const) : ("automatic" as const),
+      toolStatus: webSearchRequested
+        ? publicWebSources.length
+          ? groundedWebSources.length
+            ? ("official-web" as const)
+            : ("public-web" as const)
+          : ("official-web-unavailable" as const)
+        : retrieved.length
+          ? ("program-knowledge" as const)
+          : ("no-source" as const),
+      confidence:
+        contextSources.length > 0 &&
+        (!guidance.timeSensitive || groundedWebSources.length > 0)
+          ? ("supported" as const)
+          : ("limited" as const),
+    },
+  };
+
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:streamGenerateContent?alt=sse`,
       {
         method: "POST",
         headers: {
@@ -185,13 +274,15 @@ ${context}`;
             maxOutputTokens: 1024,
           },
         }),
-        signal: AbortSignal.timeout(45_000),
+        signal: AbortSignal.any([
+          request.signal,
+          AbortSignal.timeout(60_000),
+        ]),
       },
     );
 
-    const geminiPayload = (await response.json()) as unknown;
     if (!response.ok) {
-      const errorPayload = geminiPayload as {
+      const errorPayload = (await response.json().catch(() => ({}))) as {
         error?: { message?: string };
       };
       return Response.json(
@@ -204,48 +295,89 @@ ${context}`;
       );
     }
 
-    const answer = extractGeminiText(geminiPayload);
-    if (!answer) {
+    if (!response.body) {
       return Response.json(
-        { error: "Dịch vụ không trả về nội dung." },
+        { error: "Dịch vụ không mở được luồng trả lời." },
         { status: 502 },
       );
     }
 
-    const uniqueSources = contextSources.map(
-      ({ id, title, audience, freshness, kind, url }) => ({
-        id,
-        title,
-        audience,
-        freshness,
-        kind,
-        ...(kind === "official-web" && url ? { url } : {}),
-      }),
-    );
+    const upstreamReader = response.body.getReader();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+        const send = (event: Record<string, unknown>) => {
+          controller.enqueue(
+            encoder.encode(`${JSON.stringify(event)}\n`),
+          );
+        };
+        let buffer = "";
+        let answerLength = 0;
 
-    return Response.json({
-      answer,
-      sources: uniqueSources.slice(0, 5),
-      suggestions: guidance.suggestions,
-      needsHumanHelp:
-        guidance.needsHumanHelp ||
-        (guidance.timeSensitive && officialWebSources.length === 0),
-      timeSensitive: guidance.timeSensitive,
-      needsClarification: guidance.needsClarification,
-      decision: {
-        intent: guidance.intent,
-        toolStatus: webSearchRequested
-          ? officialWebSources.length
-            ? "official-web"
-            : "official-web-unavailable"
-          : retrieved.length
-            ? "program-knowledge"
-            : "no-source",
-        confidence:
-          contextSources.length > 0 &&
-          (!guidance.timeSensitive || officialWebSources.length > 0)
-            ? "supported"
-            : "limited",
+        send({ type: "meta", ...responseMetadata });
+
+        const processLine = (line: string) => {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) return;
+          const data = trimmed.slice(5).trim();
+          if (!data || data === "[DONE]") return;
+          try {
+            const text = extractGeminiText(JSON.parse(data));
+            if (text) {
+              answerLength += text.length;
+              send({ type: "delta", text });
+            }
+          } catch {
+            // A malformed upstream event is skipped; subsequent events can
+            // still complete the answer.
+          }
+        };
+
+        try {
+          while (true) {
+            const { done, value } = await upstreamReader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || "";
+            lines.forEach(processLine);
+          }
+          buffer += decoder.decode();
+          if (buffer) processLine(buffer);
+
+          if (!answerLength) {
+            send({
+              type: "error",
+              message: "Dịch vụ không trả về nội dung.",
+            });
+          } else {
+            send({ type: "done" });
+          }
+        } catch (error) {
+          const timedOut =
+            error instanceof Error &&
+            (error.name === "TimeoutError" || error.name === "AbortError");
+          send({
+            type: "error",
+            message: timedOut
+              ? "Luồng trả lời mất quá nhiều thời gian. Hãy thử lại."
+              : "Luồng trả lời bị gián đoạn. Hãy thử lại.",
+          });
+        } finally {
+          controller.close();
+        }
+      },
+      cancel() {
+        void upstreamReader.cancel();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "cache-control": "no-cache, no-transform",
+        "content-type": "application/x-ndjson; charset=utf-8",
+        "x-accel-buffering": "no",
       },
     });
   } catch (error) {

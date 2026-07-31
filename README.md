@@ -18,12 +18,18 @@ lộ trình chuẩn bị có căn cứ; thông tin chưa thể xác minh đượ
 ## Tính năng
 
 - Hỏi đáp có citation, cảnh báo thông tin theo khóa và fallback an toàn.
-- Tìm kiếm website chính thức qua Tavily/Firecrawl (tùy cấu hình).
+- Tìm kiếm web qua Tavily và Firecrawl với phân tầng độ tin cậy: tài liệu
+  chương trình/website VinUni-Vingroup là nguồn có căn cứ; báo chí, diễn đàn
+  và mạng xã hội chỉ để tham khảo, luôn kèm cảnh báo.
 - Nhận diện nhu cầu: tuyển sinh, nội dung học, mức độ phù hợp, chuẩn bị, quyền
   lợi, lịch trình, kỳ thi và onboarding.
 - Hiển thị quyết định dùng kho chương trình, web tool hay cần xác minh.
 - Đánh giá mức độ sẵn sàng và tạo lộ trình chuẩn bị cá nhân hóa.
 - Câu hỏi tiếp nối theo intent, ghi nhớ hội thoại trong phiên trình duyệt.
+- Context window sáu lượt gần nhất cho RAG và web tools, giúp truy vấn nối như
+  “khóa đó”, “nguồn vừa nói” hoặc “còn học phí?” không bị mất chủ thể.
+- Streaming response end-to-end qua NDJSON: metadata/citation được gửi trước,
+  nội dung Gemini hiển thị theo từng chunk và kết thúc bằng sự kiện `done`.
 - Timeout, thử lại, empty/loading/error state và chuyển tiếp Ban Tổ chức.
 - Backend chỉ luân phiên giữa hai model Gemini đã được cấu hình trong code.
 
@@ -39,7 +45,8 @@ npm run dev
 
 Điền `GEMINI_API_KEY` trong `.env`. `TAVILY_API_KEY` và
 `FIRECRAWL_API_KEY` là tùy chọn; nếu công cụ ngoài lỗi, RAG nội bộ vẫn hoạt
-động. Không commit file `.env`.
+động. Đặt `FORCE_WEB_TOOLS=true` nếu muốn bắt buộc chạy cả hai công cụ ở mọi
+lượt hỏi. Không commit file `.env`.
 
 Mở [http://localhost:3000](http://localhost:3000).
 
@@ -57,7 +64,8 @@ tên model và validation của API chat.
 
 - `app/api/chat/route.ts`: orchestration, prompt, Gemini và response contract.
 - `app/lib/knowledge.ts`: chunking và retrieval tài liệu nội bộ.
-- `app/lib/official-tools.ts`: tìm/scrape nguồn chính thức có allowlist.
+- `app/lib/official-tools.ts`: tìm/scrape nguồn web, allowlist và phân tầng
+  nguồn chính thức so với nguồn tham khảo.
 - `app/lib/product-intelligence.ts`: phân loại ý định, follow-up và handoff.
 - `app/ui/ChatApp.tsx`: trải nghiệm chat và readiness assessment.
 - `content/`: kho dữ liệu Markdown cần được chủ sở hữu cập nhật/duyệt.
