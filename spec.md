@@ -129,7 +129,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [X] Tính năng mới
   5. Không thu thập hoặc tiết lộ dữ liệu cá nhân của học viên khác.
 
 - Mức prototype nhắm tới: [ ] Sketch [ ] Mock [X] Working
-  - **Phần thật:** hỏi đáp trên corpus nhỏ đã duyệt; retrieval; citation; phân loại `đủ căn cứ / cần hỏi lại / không có căn cứ / ngoài phạm vi`; log feedback.
+  - **Phần thật:** hỏi đáp trên corpus nhỏ đã duyệt; retrieval; citation; phân loại `đủ căn cứ / cần hỏi lại / không có căn cứ / ngoài phạm vi`; phòng luyện tập tự đánh giá từ ngân hàng đã loại trùng; log feedback.
   - **Phần mock:** đăng nhập, hồ sơ cohort, ticket/handoff thực đến mentor/admin, đồng bộ đa kênh và cập nhật thời gian thực.
 
 - Automation: [ ] augment [X] conditional [ ] automate
@@ -164,6 +164,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [X] Tính năng mới
 | User thuộc cohort B nhưng hệ thống lấy lịch cohort A vì câu hỏi không nói cohort | ④ Đặc thù domain | Không trả lời lịch khi thiếu cohort; dùng cohort từ profile chỉ như gợi ý và vẫn hiển thị để user xác nhận | G4, G10, G16 |
 | Hệ thống trả nhầm deadline và học viên có nguy cơ nộp trễ | ④ Đặc thù domain | Chỉ đưa deadline khi nguồn chứa ngày rõ ràng; hiển thị ngày cập nhật và citation; nếu có nhiều nguồn thì chuyển sang trạng thái mâu thuẫn | G2, G11 |
 | User gửi ảnh/link thông báo mới hơn để sửa câu trả lời | ④ Đặc thù domain / Correction | Ghi nhận correction, cho user xem câu trả lời cập nhật tạm thời có nhãn “chưa duyệt”; chuyển nguồn mới cho admin duyệt, không tự ghi đè corpus chính thức | G9, G15, G18 |
+| User hiểu điểm luyện tập là điểm tuyển sinh chính thức | ④ Đặc thù domain | Hiện disclaimer trước và sau bài; không dùng điểm để dự đoán trúng tuyển; chỉ gợi ý nội dung nên ôn | G1, G2, G10 |
 
 - **Kịch bản làm nhóm sợ nhất khi demo:** hệ thống tự chọn một deadline trong hai nguồn mâu thuẫn và trả lời rất tự tin, khiến học viên nộp trễ. Kịch bản này phải nằm trong golden set và là lỗi chặn release.
 
@@ -172,6 +173,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [X] Tính năng mới
 - **Low-confidence (②):** học viên hỏi “Mai học ở đâu?” → hệ thống không đoán → hỏi lại cohort/ngày/hình thức học → sau khi đủ thông tin mới retrieval và trả lời.
 - **Failure/không căn cứ (①):** không có nguồn chính thức hoặc nguồn mâu thuẫn → hệ thống nói rõ chưa thể kết luận, hiển thị nguồn đã kiểm tra và nút chuyển admin/mentor.
 - **Correction (user sửa):** user chọn “Thông tin chưa đúng”, sửa cohort hoặc gửi nguồn mới → hệ thống xác nhận đã nhận, chạy lại với input mới; nguồn mới chỉ vào corpus chính thức sau khi được duyệt.
+- **Adaptive practice:** user làm 12 câu chẩn đoán → xem điểm theo bốn nhóm → luyện nhóm yếu hoặc ôn câu sai → chuyển tóm tắt sang chatbot để lập kế hoạch hai tuần.
 - **Khi bị đòi ngoài phạm vi (③):** user yêu cầu đổi lịch/hoàn tiền/chấm điểm → hệ thống từ chối thực hiện, không tạo cảm giác đã thao tác, đưa quy trình và người có thẩm quyền.
 - **Case đặc thù domain (④):** lịch và chính sách có version/cohort khác nhau → bắt buộc lọc theo cohort, ngày hiệu lực và thứ tự ưu tiên nguồn; không dùng câu trả lời chung khi trường hợp cá nhân chưa đủ điều kiện.
 
@@ -236,3 +238,4 @@ Loại: [ ] Tối ưu tính năng có sẵn  [X] Tính năng mới
 | 2026-07-30 | Điền số liệu `n=44`, tỷ lệ khó khăn, thời gian xử lý, mức tự giải quyết và các pain chính | Dựa trên toàn bộ sheet khảo sát |
 | 2026-07-30 | Chốt lát cắt “hỏi đáp thông tin có căn cứ” thay vì agent 24/7 làm mọi việc | Impact cao hơn, phạm vi kiểm soát được; đối chiếu `HV25`, `HV27`, `HV42` |
 | 2026-07-30 | Bổ sung ≥8 kịch bản theo 4 lớp ①–④ và quality bar severity cao | Theo yêu cầu guide §2.5; lỗi đáng sợ nhất là trả sai deadline |
+| 2026-07-31 | Thêm chẩn đoán, luyện theo điểm yếu và xuất Anki | Biến readiness thành hành động tự học cụ thể nhưng không giả lập kết quả tuyển chọn |

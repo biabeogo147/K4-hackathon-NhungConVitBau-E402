@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { AuthWelcome } from "./AuthWelcome";
+import { PracticeLab } from "./PracticeLab";
 
 type Source = {
   id: string;
@@ -161,6 +162,7 @@ function scoreReadiness(answers: ReadinessAnswers) {
 
 export function ChatApp() {
   const [hasEntered, setHasEntered] = useState(false);
+  const [activeView, setActiveView] = useState<"chat" | "practice">("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -347,6 +349,11 @@ export function ChatApp() {
 
   const readinessComplete = Object.values(readiness).every(Boolean);
 
+  function askCoachFromPractice(summary: string) {
+    setActiveView("chat");
+    void sendMessage(summary);
+  }
+
   if (!hasEntered) {
     return <AuthWelcome onContinue={() => setHasEntered(true)} />;
   }
@@ -376,6 +383,26 @@ export function ChatApp() {
         </div>
       </header>
 
+      <nav className="product-nav" aria-label="Khu vực sản phẩm">
+        <button
+          className={activeView === "chat" ? "active" : ""}
+          onClick={() => setActiveView("chat")}
+          type="button"
+        >
+          <span aria-hidden="true">?</span>
+          Hỏi đáp chương trình
+        </button>
+        <button
+          className={activeView === "practice" ? "active" : ""}
+          onClick={() => setActiveView("practice")}
+          type="button"
+        >
+          <span aria-hidden="true">✓</span>
+          Luyện tập cá nhân hóa
+        </button>
+      </nav>
+
+      {activeView === "chat" ? (
       <section className="workspace">
         <article className="chat-card">
           <div className="chat-heading">
@@ -644,6 +671,14 @@ export function ChatApp() {
           </div>
         </aside>
       </section>
+      ) : (
+        <section className="practice-workspace">
+          <PracticeLab
+            onAskCoach={askCoachFromPractice}
+            readinessScore={readinessResult?.score}
+          />
+        </section>
+      )}
     </main>
   );
 }

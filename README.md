@@ -28,6 +28,12 @@ lộ trình chuẩn bị có căn cứ; thông tin chưa thể xác minh đượ
   lợi, lịch trình, kỳ thi và onboarding.
 - Hiển thị quyết định dùng kho chương trình, web tool hay cần xác minh.
 - Đánh giá mức độ sẵn sàng và tạo lộ trình chuẩn bị cá nhân hóa.
+- Phòng luyện tập gồm bài chẩn đoán 12 câu, luyện theo nhóm kiến thức yếu và
+  ôn lại các câu từng trả lời sai.
+- Chấm điểm theo bốn nhóm năng lực, ghi nhận mức tự tin và chuyển kết quả sang
+  chatbot để lập lộ trình ôn tập hai tuần.
+- Lưu tiến trình cục bộ trên trình duyệt và xuất câu sai/chưa tự tin thành file
+  TSV tương thích với Anki.
 - Câu hỏi tiếp nối theo intent, ghi nhớ hội thoại trong phiên trình duyệt.
 - Context window sáu lượt gần nhất cho RAG và web tools, giúp truy vấn nối như
   “khóa đó”, “nguồn vừa nói” hoặc “còn học phí?” không bị mất chủ thể.
@@ -63,7 +69,23 @@ npm run lint
 ```
 
 Các kiểm tra bao gồm build production, SSR giao diện chính, bảo đảm không lộ
-tên model và validation của API chat.
+tên model, validation của API chat và tính toàn vẹn của ngân hàng luyện tập.
+
+## Cập nhật ngân hàng luyện tập
+
+Ngân hàng đang dùng gồm 142 câu hợp lệ đã được loại trùng từ `exam-01.json`
+đến `exam-10.json`. Nội dung chỉ dùng để tự ôn luyện, không phải đề thi hoặc
+tiêu chí tuyển chọn chính thức.
+
+Để tạo lại dữ liệu từ một folder JSON:
+
+```bash
+npm run practice:import -- "C:\duong-dan\toi\folder-json"
+```
+
+Script tự loại câu trùng, câu rỗng, câu thiếu đáp án hoặc lời giải. Các bộ
+`exam-11` đến `exam-20` chưa được nhập vì cần chuẩn hóa điểm, metadata và rà
+soát nội dung.
 
 ## Cấu trúc chính
 
@@ -72,7 +94,11 @@ tên model và validation của API chat.
 - `app/lib/official-tools.ts`: tìm/scrape nguồn web, allowlist và phân tầng
   nguồn chính thức so với nguồn tham khảo.
 - `app/lib/product-intelligence.ts`: phân loại ý định, follow-up và handoff.
+- `app/lib/practice.ts`: chọn phiên chẩn đoán/thích ứng và tổng hợp điểm yếu.
 - `app/ui/ChatApp.tsx`: trải nghiệm chat và readiness assessment.
+- `app/ui/PracticeLab.tsx`: làm bài, giải thích, kết quả và xuất Anki.
+- `app/data/practice-question-bank.json`: ngân hàng câu hỏi đã chuẩn hóa.
+- `scripts/import-practice-bank.mjs`: kiểm định và nhập lại dữ liệu nguồn.
 - `content/`: kho dữ liệu Markdown cần được chủ sở hữu cập nhật/duyệt.
 - `spec.md`: AI Spec theo template của hackathon.
 - `eval/`: golden set và hướng dẫn ghi kết quả từng lượt.
