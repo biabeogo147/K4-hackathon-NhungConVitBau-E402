@@ -5,6 +5,8 @@
 - Intent routing: **24/24 case đúng intent mong đợi (100%)**.
 - Coverage: đủ normal, source-truth, ambiguous, authority, domain-risk, rare và
   correction.
+- Integrity: **24 ID duy nhất**, mọi case có expected behavior quan sát được,
+  mỗi lớp rủi ro có tối thiểu 2 case, gồm đúng 10 case thường và 4 case hiếm.
 - Lệnh kiểm tra: `npm test`.
 
 Kết quả trên chỉ đo định tuyến deterministic, **không được trình bày như tỷ lệ

@@ -58,6 +58,15 @@ test("golden set covers hackathon risk classes and intent routing", async () => 
   );
 
   assert.equal(goldenSet.length, 24);
+  assert.equal(new Set(goldenSet.map((testCase) => testCase.id)).size, 24);
+  assert.ok(
+    goldenSet.every(
+      (testCase) =>
+        typeof testCase.expectedBehavior === "string" &&
+        testCase.expectedBehavior.trim().length > 0,
+    ),
+    "every case must define an observable expected behavior",
+  );
   const coveredClasses = new Set(goldenSet.map((testCase) => testCase.class));
   for (const requiredClass of [
     "normal",
@@ -70,6 +79,25 @@ test("golden set covers hackathon risk classes and intent routing", async () => 
   ]) {
     assert.ok(coveredClasses.has(requiredClass), `missing ${requiredClass}`);
   }
+  for (const riskClass of [
+    "source-truth",
+    "ambiguous",
+    "authority",
+    "domain-risk",
+  ]) {
+    assert.ok(
+      goldenSet.filter((testCase) => testCase.class === riskClass).length >= 2,
+      `${riskClass} must have at least two cases`,
+    );
+  }
+  assert.equal(
+    goldenSet.filter((testCase) => testCase.class === "normal").length,
+    10,
+  );
+  assert.equal(
+    goldenSet.filter((testCase) => testCase.class === "rare").length,
+    4,
+  );
   assert.ok(
     goldenSet.filter((testCase) =>
       testCase.origin.startsWith("source-doc-observation-"),
