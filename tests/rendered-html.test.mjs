@@ -51,13 +51,44 @@ test("renders the auth gate and keeps the assistant experience available", async
   assert.match(chatSource, /Onboarding & hỗ trợ nền tảng/);
 });
 
-test("does not expose the private Google document as a citation URL", async () => {
-  const routeSource = await readFile(
-    new URL("../app/api/chat/route.ts", import.meta.url),
-    "utf8",
-  );
-  assert.doesNotMatch(routeSource, /docs\.google\.com/i);
+test("exposes only the approved Drive files for program citations", async () => {
+  const [routeSource, knowledgeSource, chatSource] = await Promise.all([
+    readFile(new URL("../app/api/chat/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/knowledge.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/ui/ChatApp.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.doesNotMatch(`${routeSource}\n${knowledgeSource}`, /docs\.google\.com/i);
+  assert.doesNotMatch(knowledgeSource, /1Y1OuLG7V0AqGdN6tAjhko688Ec0B-8fLe0CQoeB9hdc/);
+  for (const approvedFileId of [
+    "1Kvb0hwyT3YHEUwUt7mLZIGHiTwya1VZd",
+    "1B5WBkTxvgTfv_7LLgBOdodm6xAhoFdxA",
+    "1dN0oqNsLGYazZMTCvzVyHZRD2tWEOe3g",
+    "1ZB_I9fcUVHTk1J3BoHxqU017lxozPc7s",
+    "134vV5ExHOKr_i2i4G9-qxZc3ZbHXgP_K",
+    "1YbFJVdnaqeOgzwZf4aVbBVlCULzbo4-1",
+    "1F7Yk6AwsXpwlvb_gIG5UYUq0ScFFBVve",
+  ]) {
+    assert.match(knowledgeSource, new RegExp(approvedFileId));
+  }
   assert.match(routeSource, /kind: "program-document"/);
+  assert.match(routeSource, /\.\.\.\(url \? \{ url \} : \{\}\)/);
+  assert.match(chatSource, /source-badge program/);
+});
+
+test("routes ordinary questions to local RAG without false web triggers", async () => {
+  const [routeSource, { shouldSearchOfficialWeb }] = await Promise.all([
+    readFile(new URL("../app/api/chat/route.ts", import.meta.url), "utf8"),
+    import("../app/lib/official-tools.ts"),
+  ]);
+  assert.equal(
+    shouldSearchOfficialWeb("Tôi nên bắt đầu tìm hiểu chương trình từ đâu?"),
+    false,
+  );
+  assert.equal(
+    shouldSearchOfficialWeb("Hãy tìm trên mạng thông tin tuyển sinh mới nhất."),
+    true,
+  );
+  assert.match(routeSource, /shouldSearchOfficialWeb\(latestQuestion\)/);
 });
 
 test("golden set covers hackathon risk classes and intent routing", async () => {

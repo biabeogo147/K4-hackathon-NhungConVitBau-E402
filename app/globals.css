@@ -783,7 +783,8 @@ h1 {
 }
 
 .source-badge.official:hover,
-.source-badge.advisory:hover {
+.source-badge.advisory:hover,
+.source-badge.program:hover {
   text-decoration: underline;
 }
 
@@ -796,6 +797,12 @@ h1 {
 
 .source-badge.official {
   border: 1px solid rgba(10, 107, 76, 0.16);
+  color: var(--green-dark);
+}
+
+.source-badge.program {
+  border: 1px solid rgba(10, 107, 76, 0.2);
+  background: var(--mint);
   color: var(--green-dark);
 }
 

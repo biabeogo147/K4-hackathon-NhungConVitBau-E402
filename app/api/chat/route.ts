@@ -112,7 +112,7 @@ export async function POST(request: Request) {
   const webSearchRequested =
     forceWebTools ||
     (initialGuidance.intent !== "greeting" &&
-      shouldSearchOfficialWeb(toolContext.query));
+      shouldSearchOfficialWeb(latestQuestion));
   const publicWebSources = webSearchRequested
     ? await getPublicWebSources(toolContext.query)
     : [];
@@ -126,7 +126,6 @@ export async function POST(request: Request) {
     ...retrieved.map((source) => ({
       ...source,
       kind: "program-document" as const,
-      url: undefined,
       trustLevel: "grounded" as const,
       disclaimer: undefined,
     })),
@@ -158,7 +157,9 @@ export async function POST(request: Request) {
                   ? "Nguồn công khai hoặc mạng xã hội — chỉ tham khảo, có thể không chính xác"
                   : "Tài liệu chương trình đã cung cấp"
             } | Đối tượng: ${source.audience} | Độ mới: ${source.freshness}${
-              source.url ? ` | URL: ${source.url}` : ""
+              source.kind !== "program-document" && source.url
+                ? ` | URL: ${source.url}`
+                : ""
             }${source.disclaimer ? ` | Cảnh báo: ${source.disclaimer}` : ""}]\n${source.excerpt}`,
         )
         .join("\n\n")
@@ -223,7 +224,7 @@ ${context}`;
       kind,
       trustLevel,
       ...(disclaimer ? { disclaimer } : {}),
-      ...(kind !== "program-document" && url ? { url } : {}),
+      ...(url ? { url } : {}),
     }),
   );
   const responseMetadata = {

@@ -39,7 +39,7 @@ const SEARCH_DOMAINS = [
   ...SOCIAL_DOMAINS,
   ...PUBLIC_REFERENCE_DOMAINS,
 ] as const;
-const TOOL_TIMEOUT_MS = 12_000;
+const TOOL_TIMEOUT_MS = 8_000;
 
 export type PublicWebSource = {
   id: string;
@@ -204,34 +204,6 @@ async function searchWithFirecrawl(query: string) {
     .slice(0, 5);
 }
 
-async function scrapeWithFirecrawl(url: string) {
-  const apiKey = process.env.FIRECRAWL_API_KEY?.trim();
-  if (!apiKey || !classifyPublicUrl(url)) return "";
-
-  const response = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      url,
-      formats: ["markdown"],
-      onlyMainContent: true,
-      maxAge: 3_600_000,
-      removeBase64Images: true,
-      timeout: 20_000,
-    }),
-    signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
-  });
-
-  if (!response.ok) return "";
-  const payload = (await response.json()) as {
-    data?: { markdown?: string };
-  };
-  return payload.data?.markdown?.replace(/\s+/g, " ").trim().slice(0, 5000) || "";
-}
-
 export async function getPublicWebSources(
   query: string,
 ): Promise<PublicWebSource[]> {
@@ -261,11 +233,6 @@ export async function getPublicWebSources(
       .slice(0, 6);
     if (!results.length) return [];
 
-    const scrapedTopResult =
-      results[0]?.url && (results[0]?.content?.length ?? 0) < 1000
-      ? await scrapeWithFirecrawl(results[0].url)
-      : "";
-
     return results.flatMap((result, index) => {
       const classification = classifyPublicUrl(result.url || "");
       if (!classification) return [];
@@ -281,10 +248,7 @@ export async function getPublicWebSources(
         freshness: result.published_date
           ? `Đăng/cập nhật: ${result.published_date}`
           : "Tìm trực tuyến — cần đối chiếu ngày trên trang",
-        excerpt:
-          index === 0 && scrapedTopResult
-            ? scrapedTopResult
-            : result.content?.trim().slice(0, 1800) || "",
+        excerpt: result.content?.trim().slice(0, 1800) || "",
         url: result.url as string,
         ...classification,
         ...(advisory

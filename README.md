@@ -18,6 +18,9 @@ lộ trình chuẩn bị có căn cứ; thông tin chưa thể xác minh đượ
 ## Tính năng
 
 - Hỏi đáp có citation, cảnh báo thông tin theo khóa và fallback an toàn.
+- Citation của tài liệu chương trình mở đúng file nguồn trong thư mục Google
+  Drive đã được chủ sở hữu phê duyệt; các link tài liệu cũ ngoài danh sách vẫn
+  bị chặn.
 - Tìm kiếm web qua Tavily và Firecrawl với phân tầng độ tin cậy: tài liệu
   chương trình/website VinUni-Vingroup là nguồn có căn cứ; báo chí, diễn đàn
   và mạng xã hội chỉ để tham khảo, luôn kèm cảnh báo.
@@ -45,8 +48,10 @@ npm run dev
 
 Điền `GEMINI_API_KEY` trong `.env`. `TAVILY_API_KEY` và
 `FIRECRAWL_API_KEY` là tùy chọn; nếu công cụ ngoài lỗi, RAG nội bộ vẫn hoạt
-động. Đặt `FORCE_WEB_TOOLS=true` nếu muốn bắt buộc chạy cả hai công cụ ở mọi
-lượt hỏi. Không commit file `.env`.
+động. Mặc định đặt `FORCE_WEB_TOOLS=false` để câu hỏi thông thường dùng RAG
+local và phản hồi nhanh; web tools vẫn tự chạy với truy vấn cần thông tin mới
+hoặc khi người dùng yêu cầu tìm trên mạng. Chỉ bật `true` khi demo/audit cần
+ép công cụ ở mọi lượt. Không commit file `.env`.
 
 Mở [http://localhost:3000](http://localhost:3000).
 

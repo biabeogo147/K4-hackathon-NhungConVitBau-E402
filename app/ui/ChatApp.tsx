@@ -207,7 +207,7 @@ export function ChatApp() {
     setIsWaitingForResponse(true);
     const controller = new AbortController();
     requestController.current = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 50_000);
+    const timeout = window.setTimeout(() => controller.abort(), 75_000);
 
     let streamingMessageId: string | undefined;
     try {
@@ -489,6 +489,18 @@ export function ChatApp() {
                                 title={source.disclaimer ||
                                   "Nguồn công khai chỉ nên tham khảo"}>
                                 Tham khảo {index + 1}: {source.title} ↗
+                              </a>
+                            ) : source.kind === "program-document" &&
+                              source.url ? (
+                              <a
+                                className="source-badge program"
+                                href={source.url}
+                                key={`${source.id}-${index}`}
+                                rel="noreferrer"
+                                target="_blank"
+                                title={`Tài liệu chương trình có căn cứ · ${source.freshness}`}
+                              >
+                                Tài liệu {index + 1}: {source.title} ↗
                               </a>
                             ) : (
                               <span className="source-badge internal"

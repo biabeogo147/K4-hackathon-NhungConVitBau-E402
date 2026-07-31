@@ -12,6 +12,7 @@ type KnowledgeDocument = {
   audience: string;
   freshness: string;
   priority: number;
+  sourceUrl: string;
   content: string;
 };
 
@@ -22,7 +23,12 @@ export type RetrievedSource = {
   freshness: string;
   excerpt: string;
   score: number;
+  url: string;
 };
+
+function driveFileUrl(fileId: string) {
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
 
 const DOCUMENTS: KnowledgeDocument[] = [
   {
@@ -31,6 +37,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Ứng viên",
     freshness: "Cần kiểm tra theo đợt thi",
     priority: 5,
+    sourceUrl: driveFileUrl("1Kvb0hwyT3YHEUwUt7mLZIGHiTwya1VZd"),
     content: examRules,
   },
   {
@@ -39,6 +46,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Học viên đã nhập học",
     freshness: "Phiên bản không ghi ngày",
     priority: 4,
+    sourceUrl: driveFileUrl("1B5WBkTxvgTfv_7LLgBOdodm6xAhoFdxA"),
     content: handbook,
   },
   {
@@ -47,6 +55,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Ứng viên và học viên của khóa cụ thể",
     freshness: "Nhạy cảm theo thời gian — phải xác minh",
     priority: 1,
+    sourceUrl: driveFileUrl("1dN0oqNsLGYazZMTCvzVyHZRD2tWEOe3g"),
     content: zaloNotices,
   },
   {
@@ -55,6 +64,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Ứng viên",
     freshness: "Nhạy cảm theo thời gian — phải xác minh",
     priority: 5,
+    sourceUrl: driveFileUrl("1ZB_I9fcUVHTk1J3BoHxqU017lxozPc7s"),
     content: admissions,
   },
   {
@@ -63,6 +73,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Học viên đã nhận thông báo nhập học",
     freshness: "Tổng hợp cộng đồng — phải xác minh ngoại lệ",
     priority: 2,
+    sourceUrl: driveFileUrl("134vV5ExHOKr_i2i4G9-qxZc3ZbHXgP_K"),
     content: practicalQa,
   },
   {
@@ -71,6 +82,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Học viên đã nhập học",
     freshness: "Theo vận hành Discord — có thể thay đổi theo khóa",
     priority: 3,
+    sourceUrl: driveFileUrl("1YbFJVdnaqeOgzwZf4aVbBVlCULzbo4-1"),
     content: discordOnboarding,
   },
   {
@@ -79,6 +91,7 @@ const DOCUMENTS: KnowledgeDocument[] = [
     audience: "Ứng viên và học viên",
     freshness: "Ảnh chụp thông tin đến 30/07/2026",
     priority: 4,
+    sourceUrl: driveFileUrl("1F7Yk6AwsXpwlvb_gIG5UYUq0ScFFBVve"),
     content: publicUpdates2026,
   },
 ];
@@ -203,6 +216,7 @@ export function retrieveKnowledge(
       freshness: chunk.document.freshness,
       excerpt: chunk.content,
       score,
+      url: chunk.document.sourceUrl,
       matchedTokens,
       intentScore,
     };
