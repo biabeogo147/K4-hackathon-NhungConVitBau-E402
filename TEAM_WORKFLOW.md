@@ -9,7 +9,7 @@ không cần sao chép `node_modules` hoặc toàn bộ repository nhiều lần
 | Nguyễn Đàm Kiên | 2A202602015 | `AI-Thuc-Chien-01-Nguyen-Dam-Kien` | `team/kien-evidence` | Evidence log, phương pháp mining, nguồn được duyệt |
 | Lê Nguyễn Phước Thành | 2A202601032 | `AI-Thuc-Chien-02-Le-Nguyen-Phuoc-Thanh` | `team/thanh-ai-eval` | Prompt, RAG, golden set và kết quả eval |
 | Nguyễn Văn Nam | 2A202601973 | `AI-Thuc-Chien-03-Nguyen-Van-Nam` | `team/nam-integration` | API/tools, tích hợp, test, merge và release |
-| Lê Kim Tinh | 2A202601560 | `AI-Thuc-Chien-04-Le-Kim-Tinh` | `team/tinh-ux` | UI, readiness flow, responsive và accessibility |
+| Lê Kim Tính | 2A202601560 | `AI-Thuc-Chien-04-Le-Kim-Tinh` | `team/tinh-ux` | UI, readiness flow, responsive và accessibility |
 | Trần Chí Hiển | 2A202601162 | `AI-Thuc-Chien-05-Tran-Chi-Hien` | `team/hien-validation-demo` | User validation, spec, demo slides và repo QA |
 
 ## Phạm vi chi tiết
@@ -35,7 +35,7 @@ không cần sao chép `node_modules` hoặc toàn bộ repository nhiều lần
 - Chạy build, lint, automated tests và kiểm tra không lộ secret/model.
 - Chịu trách nhiệm bản demo local và bản release cuối.
 
-### Lê Kim Tinh — UX/UI
+### Lê Kim Tính — UX/UI
 
 - Hoàn thiện trải nghiệm ba giai đoạn: tìm hiểu, dự tuyển, sắp tham gia.
 - Kiểm tra readiness flow, loading, error, empty và handoff.

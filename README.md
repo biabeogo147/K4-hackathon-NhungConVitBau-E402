@@ -12,7 +12,7 @@ lộ trình chuẩn bị có căn cứ; thông tin chưa thể xác minh đượ
 | Nguyễn Văn Nam | 2A202601973 | Product lead, AI orchestration và tích hợp |
 | Nguyễn Đàm Kiên | 2A202602015 | Evidence, mining và biên tập knowledge base |
 | Lê Nguyễn Phước Thành | 2A202601032 | Frontend, UX và responsive |
-| Lê Kim Tịnh | 2A202601560 | Prompt, golden set và evaluation |
+| Lê Kim Tính | 2A202601560 | Prompt, golden set và evaluation |
 | Trần Chí Hiển | 2A202601162 | Validation, spec và demo |
 
 ## Tính năng
